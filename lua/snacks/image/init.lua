@@ -123,6 +123,7 @@ local defaults = {
     image = " ",
   },
   ---@class snacks.image.convert.Config
+  ---@field url? { headers: table<string, string> }
   convert = {
     notify = false, -- show a notification on error
     ---@type snacks.image.args
