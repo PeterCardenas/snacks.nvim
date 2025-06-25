@@ -58,6 +58,7 @@ local commands = {
     },
   },
   url = {
+    pipe = false,
     cmd = function(_step)
       local header_args = {} ---@type string[]
       local url_config = Snacks.image.config.convert.url or { headers = {} }
@@ -87,6 +88,33 @@ local commands = {
       if uv.fs_stat(step.file) then
         vim.fs.rm(step.file)
       end
+    end,
+    on_done = function(step)
+      local file = step.file
+      -- get the file type with the file command and then cp the file with the appropriate extension
+      local output = vim.system({ "file", "-b", file }):wait().stdout
+      if not output then
+        return true
+      end
+      local filetype = string.match(output, "^([A-Z][A-Z][A-Z])")
+      if not filetype then
+        return true
+      end
+      local filetype_to_ext = {
+        ["PNG"] = "png",
+        ["JPEG"] = "jpg",
+        ["SVG"] = "svg",
+        ["ISO"] = "mov",
+        ["GIF"] = "gif",
+      }
+      local ext = filetype_to_ext[filetype]
+      if not ext then
+        return true
+      end
+      if vim.fn.filecopy(file, file .. "." .. ext) == 0 then
+        return true
+      end
+      step.meta.src = file .. "." .. ext
     end,
   },
   lfs = {
