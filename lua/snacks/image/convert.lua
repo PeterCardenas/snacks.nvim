@@ -96,7 +96,7 @@ local commands = {
       if not output then
         return true
       end
-      local filetype = string.match(output, "^([A-Z][A-Z][A-Z])")
+      local filetype = string.match(output, "^([A-Z][A-Za-z][A-Za-z][A-Z]?)")
       if not filetype then
         return true
       end
@@ -106,6 +106,7 @@ local commands = {
         ["SVG"] = "svg",
         ["ISO"] = "mov",
         ["GIF"] = "gif",
+        ["WebM"] = "webm",
       }
       local ext = filetype_to_ext[filetype]
       if not ext then
