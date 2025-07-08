@@ -54,9 +54,9 @@ function M.new(buf, src, opts)
   Snacks.image.setup() -- always setup so that images/videos can be opened
   local self = setmetatable({}, M)
 
-  self.img = Snacks.image.image.new(src)
-  self.img:place(self)
   self.opts = opts or {}
+  self.img = Snacks.image.image.new(src, self.opts.fullscreen)
+  self.img:place(self)
   self.opts.pos = self.opts.pos or { 1, 0 }
   self.buf = buf
   self.augroup = vim.api.nvim_create_augroup("snacks.image." .. self.id, { clear = true })

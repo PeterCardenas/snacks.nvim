@@ -204,6 +204,7 @@ Snacks.util.set_hl({
 ---@field on_update_pre? fun(placement: snacks.image.Placement)
 ---@field type? snacks.image.Type
 ---@field auto_resize? boolean
+---@field fullscreen? boolean
 
 local did_setup = false
 

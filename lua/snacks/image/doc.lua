@@ -401,6 +401,33 @@ function M.at_cursor(cb)
   end, { from = cursor[1], to = cursor[1] + 1 })
 end
 
+---@param image_inline snacks.image.inline
+function M.show_fullscreen(image_inline)
+  if not image_inline then
+    return
+  end
+  M.at_cursor(function(src)
+    if not src then
+      return
+    end
+    local win = Snacks.win()
+    win:open_buf()
+    local win_width = vim.api.nvim_win_get_width(win.win)
+    local win_height = vim.api.nvim_win_get_height(win.win)
+    local o = Snacks.config.merge({}, Snacks.image.config.doc, {
+      inline = false,
+      max_width = win_width,
+      max_height = win_height,
+      min_width = win_width,
+      min_height = win_height,
+      width = win_width,
+      height = win_height,
+      fullscreen = true,
+    })
+    Snacks.image.placement.new(win.buf, src, o)
+  end)
+end
+
 function M.hover()
   local current_win = vim.api.nvim_get_current_win()
   local current_buf = vim.api.nvim_get_current_buf()
@@ -468,7 +495,7 @@ function M.hover()
   end)
 end
 
----@param buf number
+---@param buf integer
 function M._attach(buf)
   if not vim.api.nvim_buf_is_valid(buf) then
     return
@@ -484,8 +511,10 @@ function M._attach(buf)
     return
   end
 
+  local image_inline ---@type snacks.image.inline
+
   if inline then
-    Snacks.image.inline.new(buf)
+    image_inline = Snacks.image.inline.new(buf)
   else
     local group = vim.api.nvim_create_augroup("snacks.image.doc." .. buf, { clear = true })
     vim.api.nvim_create_autocmd({ "CursorMoved" }, {
@@ -495,6 +524,10 @@ function M._attach(buf)
     })
     vim.schedule(M.hover)
   end
+
+  vim.keymap.set("n", "<leader>ih", function()
+    M.show_fullscreen(image_inline)
+  end, {  buffer = buf, desc = "Show image in fullscreen" })
 end
 
 ---@param buf number

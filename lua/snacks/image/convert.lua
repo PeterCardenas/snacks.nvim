@@ -112,7 +112,7 @@ local commands = {
       if not ext then
         return true
       end
-      if vim.fn.filecopy(file, file .. "." .. ext) == 0 then
+      if vim.fn.filereadable(file .. "." .. ext) == 0 and vim.fn.filecopy(file, file .. "." .. ext) == 0 then
         return true
       end
       step.meta.src = file .. "." .. ext

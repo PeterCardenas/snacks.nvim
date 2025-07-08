@@ -47,14 +47,16 @@ local function use(img)
 end
 
 ---@param src string
-function M.new(src)
+---@param fullscreen? boolean
+function M.new(src, fullscreen)
   local self = setmetatable({}, M)
   self.src = src
   self.file = self:convert()
-  if images[self.file] then
-    return images[self.file]
+  local id = fullscreen and self.file .. "fullscreen" or self.file
+  if images[id] then
+    return images[id]
   end
-  images[self.file] = self
+  images[id] = self
   _id = _id + 1
   local bit = require("bit")
   -- generate a unique id for this nvim instance (10 bits)
