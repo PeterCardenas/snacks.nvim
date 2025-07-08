@@ -273,6 +273,8 @@ function M:render_grid(loc)
     end
   end
 
+  local img_ext = self.img.info and self.img.info.format
+  local icon = Snacks.image.config.icons[img_ext] or Snacks.image.config.icons[self.opts.type] or Snacks.image.config.icons.image
   if height == 1 and #lines == 1 then
     -- render inline
     self:_render({
@@ -336,19 +338,19 @@ function M:render_grid(loc)
       local padding = string.rep(" ", offset)
       extmarks[#extmarks + 1] = {
         row = row,
-        col = 0,
-        virt_lines_above = row ~= range[3] - 1,
+        col = range[2],
         ---@param l string
         virt_lines = vim.tbl_map(function(l)
           return { { padding }, { l, hl } }
         end, img),
+        virt_text = { { icon, "SnacksImageAnchor" } },
+        virt_text_pos = "inline",
         virt_text_hide = false,
       }
     end
     self:_render(extmarks)
   else
     local is_inline = has_before or has_after
-    local icon = Snacks.image.config.icons[self.opts.type or "image"] or Snacks.image.config.icons.image
     -- render below in virtual lines
     extmarks[#extmarks + 1] = {
       row = range[1] - 1,
