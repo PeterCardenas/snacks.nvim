@@ -89,7 +89,8 @@ local defaults = {
     -- (experimental)
     ---@param lang string tree-sitter language
     ---@param type snacks.image.Type image type
-    conceal = function(lang, type)
+    ---@param src string image source
+    conceal = function(lang, type, src)
       -- only conceal math expressions
       return type == "math"
     end,
