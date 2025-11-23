@@ -108,9 +108,6 @@ function M.envs()
 end
 
 function M.env()
-  if M._env then
-    return M._env
-  end
   if not M._terminal then
     M.detect()
   end
