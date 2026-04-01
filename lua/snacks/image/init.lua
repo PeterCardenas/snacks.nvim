@@ -51,6 +51,9 @@ M.meta = {
 --- This is called after the given `resolve` function.
 --- Note that this only gets called when `resolve` is either not defined or returns `nil`.
 ---@field async_resolve? fun(file: string, src: string, on_complete: fun(resolved_src: string|nil)): nil
+--- Called with the resolved image src (path or url).
+--- Return `true` to skip fetching, converting and displaying the image.
+---@field ignore? fun(src: string): boolean?
 ---@field convert? snacks.image.convert.Config
 local defaults = {
   formats = {

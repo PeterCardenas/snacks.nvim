@@ -347,6 +347,10 @@ function M._img(ctx, on_complete)
     transform(img, ctx)
   end
   local function after_resolve()
+    if img.src and Snacks.image.config.ignore and Snacks.image.config.ignore(img.src) then
+      on_complete(nil)
+      return
+    end
     if img.content and not img.src then
       local root = Snacks.image.config.cache
       vim.fn.mkdir(root, "p")

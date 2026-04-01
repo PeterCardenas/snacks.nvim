@@ -10,6 +10,9 @@ function M._attach(buf, opts)
   end
   opts = opts or {}
   local file = opts.src or vim.api.nvim_buf_get_name(buf)
+  if Snacks.image.config.ignore and Snacks.image.config.ignore(file) then
+    return
+  end
   if not Snacks.image.supports(file) then
     local lines = {} ---@type string[]
     lines[#lines + 1] = "# Image viewer"
