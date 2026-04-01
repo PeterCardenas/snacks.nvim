@@ -136,6 +136,7 @@ function M:error()
   vim.bo[self.buf].modifiable = true
   vim.api.nvim_buf_set_lines(self.buf, 0, -1, false, lines)
   vim.bo[self.buf].modifiable = false
+  vim.bo[self.buf].modified = false
   if not vim.treesitter.start(self.buf, "markdown") then
     vim.bo[self.buf].syntax = "markdown"
   end
@@ -148,6 +149,7 @@ function M:progress()
   vim.bo[self.buf].modifiable = true
   vim.api.nvim_buf_set_lines(self.buf, 0, -1, false, {})
   vim.bo[self.buf].modifiable = false
+  vim.bo[self.buf].modified = false
   local timer = assert(uv.new_timer())
   timer:start(
     0,
