@@ -93,6 +93,9 @@ function M:update()
     return conceal
   end or conceal
   Snacks.image.doc.find_visible(self.buf, function(imgs)
+    if not vim.api.nvim_buf_is_valid(self.buf) then
+      return
+    end
     local visible = self:visible()
     local stats = { new = 0, del = 0, update = 0 }
     for _, i in ipairs(imgs) do
