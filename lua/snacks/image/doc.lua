@@ -259,7 +259,16 @@ function M.find(buf, cb, opts)
   local from, to = opts.from, opts.to
   Snacks.util.parse(parser, from and to and { from, to } or true, function()
     local ret = {} ---@type snacks.image.match[]
-    local queued_image_matches_count = 0
+    -- Start at 1 as a sentinel for the iteration loop itself.
+    -- This prevents the callback from firing prematurely when
+    -- M._img resolves synchronously (e.g. local absolute paths).
+    local pending = 1
+    local function check_done()
+      pending = pending - 1
+      if pending == 0 then
+        cb(ret)
+      end
+    end
     parser:for_each_tree(function(tstree, tree)
       if not tstree then
         return
@@ -285,17 +294,15 @@ function M.find(buf, cb, opts)
               ctx[field] = { node = nodes[1], meta = meta[id] or {} }
             end
           end
-          queued_image_matches_count = queued_image_matches_count + 1
+          pending = pending + 1
           M._img(ctx, function(img)
-            queued_image_matches_count = queued_image_matches_count - 1 ---@type integer
             ret[#ret + 1] = img
-            if queued_image_matches_count == 0 then
-              cb(ret)
-            end
+            check_done()
           end)
         end
       end
     end)
+    check_done()
   end)
 end
 
@@ -531,7 +538,7 @@ function M._attach(buf)
 
   vim.keymap.set("n", "<leader>ih", function()
     M.show_fullscreen(image_inline)
-  end, {  buffer = buf, desc = "Show image in fullscreen" })
+  end, { buffer = buf, desc = "Show image in fullscreen" })
 end
 
 ---@param buf number
