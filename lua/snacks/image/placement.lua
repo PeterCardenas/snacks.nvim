@@ -264,7 +264,8 @@ function M:render_grid(loc)
   -- we can overlay the image if the text is multiline,
   -- or the text has nothing after the image
   -- and the text is not wrapped or the text fits the window width
-  local can_overlay = (#lines > 1 or not has_after)
+  local force_virt_lines = self.opts.render_mode == "virt_lines"
+  local can_overlay = not force_virt_lines and (#lines > 1 or not has_after)
   for _, win in ipairs(can_overlay and self:wins() or {}) do
     if vim.wo[win].wrap then
       local info = vim.fn.getwininfo(win)[1]
@@ -277,7 +278,7 @@ function M:render_grid(loc)
 
   local img_ext = self.img.info and self.img.info.format
   local icon = Snacks.image.config.icons[img_ext] or Snacks.image.config.icons[self.opts.type] or Snacks.image.config.icons.image
-  if height == 1 and #lines == 1 then
+  if height == 1 and #lines == 1 and not force_virt_lines then
     -- render inline
     self:_render({
       {

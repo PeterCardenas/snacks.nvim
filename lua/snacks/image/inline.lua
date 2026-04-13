@@ -92,6 +92,10 @@ function M:update()
   conceal = type(conceal) ~= "function" and function()
     return conceal
   end or conceal
+  local render_mode = Snacks.image.config.doc.render_mode
+  render_mode = type(render_mode) ~= "function" and function()
+    return render_mode or "inline"
+  end or render_mode
   Snacks.image.doc.find_visible(self.buf, function(imgs)
     if not vim.api.nvim_buf_is_valid(self.buf) then
       return
@@ -117,6 +121,7 @@ function M:update()
             range = i.range,
             inline = true,
             conceal = vim.b[self.buf].snacks_image_conceal or conceal(i.lang, i.type, i.src),
+            render_mode = render_mode(i.lang, i.type, i.src),
             type = i.type,
             ---@param p snacks.image.Placement
             on_update = function(p)

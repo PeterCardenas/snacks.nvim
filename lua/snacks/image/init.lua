@@ -97,6 +97,13 @@ local defaults = {
       -- only conceal math expressions
       return type == "math"
     end,
+    ---@param lang string tree-sitter language
+    ---@param type snacks.image.Type image type
+    ---@param src string image source
+    ---@return "inline"|"virt_lines"
+    render_mode = function(lang, type, src)
+      return "inline"
+    end,
   },
   img_dirs = { "img", "images", "assets", "static", "public", "media", "attachments" },
   -- window options applied to windows displaying image buffers
@@ -197,6 +204,7 @@ Snacks.util.set_hl({
 ---@field pos? snacks.image.Pos (row, col) (1,0)-indexed. defaults to the top-left corner
 ---@field range? Range4
 ---@field conceal? boolean
+---@field render_mode? "inline"|"virt_lines"
 ---@field inline? boolean render the image inline in the buffer
 ---@field width? number
 ---@field min_width? number

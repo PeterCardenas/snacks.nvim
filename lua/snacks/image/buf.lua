@@ -30,15 +30,42 @@ function M._attach(buf, opts)
     vim.bo[buf].modifiable = false
     vim.bo[buf].modified = false
   else
-    Snacks.util.bo(buf, {
-      filetype = "image",
-      modifiable = false,
-      modified = false,
-      swapfile = false,
-    })
-    opts.conceal = true
-    opts.auto_resize = true
-    return Snacks.image.placement.new(buf, file, opts)
+    -- Evaluate render_mode for this file
+    local render_mode = Snacks.image.config.doc.render_mode
+    if type(render_mode) == "function" then
+      render_mode = render_mode(nil, "image", file)
+    end
+
+    if render_mode == "virt_lines" then
+      -- Keep source text visible, render image as virtual lines below
+      local lines = vim.fn.readfile(file)
+      vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+      local ext = vim.fn.fnamemodify(file, ":e"):lower()
+      local ft_map = { svg = "xml" }
+      Snacks.util.bo(buf, {
+        filetype = ft_map[ext] or ext,
+        modified = false,
+        swapfile = false,
+      })
+      local line_count = vim.api.nvim_buf_line_count(buf)
+      local last_line = vim.api.nvim_buf_get_lines(buf, line_count - 1, line_count, false)[1] or ""
+      opts.render_mode = "virt_lines"
+      opts.inline = true
+      opts.auto_resize = true
+      opts.pos = { line_count, 0 }
+      opts.range = { line_count, 0, line_count, #last_line }
+      return Snacks.image.placement.new(buf, file, opts)
+    else
+      Snacks.util.bo(buf, {
+        filetype = "image",
+        modifiable = false,
+        modified = false,
+        swapfile = false,
+      })
+      opts.conceal = true
+      opts.auto_resize = true
+      return Snacks.image.placement.new(buf, file, opts)
+    end
   end
 end
 
