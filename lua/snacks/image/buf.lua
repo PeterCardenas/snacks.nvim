@@ -42,11 +42,15 @@ function M._attach(buf, opts)
       vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
       local ext = vim.fn.fnamemodify(file, ":e"):lower()
       local ft_map = { svg = "xml" }
+      local source_ft = ft_map[ext] or ext
       Snacks.util.bo(buf, {
-        filetype = ft_map[ext] or ext,
+        filetype = "image",
         modified = false,
         swapfile = false,
       })
+      if not vim.treesitter.start(buf, source_ft) then
+        vim.bo[buf].syntax = source_ft
+      end
       local line_count = vim.api.nvim_buf_line_count(buf)
       local last_line = vim.api.nvim_buf_get_lines(buf, line_count - 1, line_count, false)[1] or ""
       opts.render_mode = "virt_lines"
