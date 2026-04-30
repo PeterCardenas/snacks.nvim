@@ -534,15 +534,20 @@ function M:update()
   end
 
   local state = self:state()
-  if vim.deep_equal(state, self._state) then
-    return
-  end
-  self._state = state
-
   if #state.wins == 0 then
     self:hide()
     return
   end
+  -- We mark placements as hidden when no window shows the buffer.
+  -- Flip this flag back once a window is visible again so extmarks render.
+  if self.hidden then
+    self.hidden = false
+    state.hidden = false
+  end
+  if vim.deep_equal(state, self._state) then
+    return
+  end
+  self._state = state
   self.img:place(self)
 
   self:debug("update")
