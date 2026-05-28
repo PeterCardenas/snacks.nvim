@@ -143,6 +143,53 @@ describe("image.inline scrolling", function()
     assert.is_true(closed[first.id], "expected the stale placement to be closed")
   end)
 
+  it("survives placements that hold userdata fields", function()
+    local state = {
+      matches = {
+        {
+          id = "image-1",
+          src = "/tmp/image.png",
+          pos = { 10, 0 },
+          range = { 10, 0, 10, 12 },
+          lang = "markdown",
+          type = "image",
+        },
+      },
+      visible = {},
+    }
+
+    Snacks.image.doc.find_visible = function(_, cb)
+      cb(vim.deepcopy(state.matches))
+    end
+
+    local timer = vim.uv.new_timer()
+    local created = 0
+    Snacks.image.placement.new = function(_, src, opts)
+      created = created + 1
+      local placement = {
+        id = created,
+        img = { src = src, handle = timer },
+        opts = opts,
+        eids = { created },
+        close = function() end,
+        update = function() end,
+      }
+      if opts.on_update then
+        opts.on_update(placement)
+      end
+      return placement
+    end
+
+    local doc = fake_doc(state)
+    doc:update()
+
+    state.matches = {}
+    doc:update()
+
+    assert.are.equal(0, count(doc.imgs), "expected the placement to be cleaned up without errors")
+    timer:close()
+  end)
+
   it("treats virt_lines spillover as visible after the anchor scrolls above the viewport", function()
     vim.cmd("enew")
     local buf = vim.api.nvim_get_current_buf()

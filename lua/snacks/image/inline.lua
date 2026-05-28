@@ -164,7 +164,11 @@ function M:update()
       return
     end
     local visible = self:visible()
-    local stale = vim.deepcopy(self.imgs)
+    -- Shallow copy: deepcopy fails on the libuv userdata held by image handles.
+    local stale = {} ---@type table<number, snacks.image.Placement>
+    for id, img in pairs(self.imgs) do
+      stale[id] = img
+    end
     local stats = { new = 0, del = 0, update = 0 }
     for _, i in ipairs(imgs) do
       local img = self:find(i)
