@@ -9,6 +9,7 @@
 ---@field closed? boolean
 ---@field type? snacks.image.Type
 ---@field _loc? snacks.image.Loc
+---@field _match_id? string|number
 ---@field _state? snacks.image.State
 ---@field eids number[]
 ---@field _extmarks? snacks.image.Extmark[]

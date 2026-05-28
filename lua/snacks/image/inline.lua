@@ -1,6 +1,7 @@
 ---@class snacks.image.inline
 ---@field buf number
 ---@field imgs table<number, snacks.image.Placement>
+---@field matches table<string|number, snacks.image.Placement>
 ---@field idx table<number, snacks.image.Placement>
 local M = {}
 M.__index = M
@@ -9,6 +10,7 @@ function M.new(buf)
   local self = setmetatable({}, M)
   self.buf = buf
   self.imgs = {}
+  self.matches = {}
   self.idx = {}
   local group = vim.api.nvim_create_augroup("snacks.image.inline." .. buf, { clear = true })
 
@@ -59,8 +61,11 @@ function M:visible()
   local ret = {} ---@type table<number, snacks.image.Placement>
   for _, win in ipairs(vim.fn.win_findbuf(self.buf)) do
     local info = vim.fn.getwininfo(win)[1]
-    for k, v in pairs(self:get(math.max(info.topline - 1, 1), info.botline)) do
-      ret[k] = v
+    local top = math.max(info.topline - 1, 1)
+    for _, img in pairs(self.imgs) do
+      if self:is_visible(img, top, info.botline) then
+        ret[img.id] = img
+      end
     end
   end
   return ret
@@ -87,6 +92,64 @@ function M:get(from, to)
   return ret
 end
 
+---@param img snacks.image.Placement
+---@param top number
+---@param bottom number
+---@return boolean
+function M:is_visible(img, top, bottom)
+  for _, eid in ipairs(img.eids) do
+    local ok, extmark = pcall(vim.api.nvim_buf_get_extmark_by_id, self.buf, Snacks.image.placement.ns, eid, {
+      details = true,
+    })
+    if ok and extmark and #extmark > 0 then
+      local row = extmark[1] + 1
+      local details = extmark[3] or {}
+      if row >= top and row <= bottom then
+        return true
+      end
+      local virt_lines = details.virt_lines and #details.virt_lines or 0
+      -- Virtual lines render below the anchor row and can still occupy the window
+      -- after the source line itself has scrolled above the viewport.
+      if virt_lines > 0 and row < top and row + virt_lines >= top then
+        return true
+      end
+    end
+  end
+  return false
+end
+
+---@param match snacks.image.match
+---@return snacks.image.Placement?
+function M:find(match)
+  local placement = self.matches[match.id]
+  if placement and self.imgs[placement.id] then
+    return placement
+  end
+  for _, img in pairs(self.imgs) do
+    if img.img.src == match.src and vim.deep_equal(img.opts.range, match.range) then
+      return img
+    end
+  end
+end
+
+---@param placement snacks.image.Placement
+---@param match_id string|number
+function M:track(placement, match_id)
+  if placement._match_id and placement._match_id ~= match_id then
+    self.matches[placement._match_id] = nil
+  end
+  placement._match_id = match_id
+  self.matches[match_id] = placement
+end
+
+---@param placement snacks.image.Placement
+function M:forget(placement)
+  if placement._match_id then
+    self.matches[placement._match_id] = nil
+    placement._match_id = nil
+  end
+end
+
 function M:update()
   local conceal = Snacks.image.config.doc.conceal
   conceal = type(conceal) ~= "function" and function()
@@ -101,16 +164,10 @@ function M:update()
       return
     end
     local visible = self:visible()
+    local stale = vim.deepcopy(self.imgs)
     local stats = { new = 0, del = 0, update = 0 }
     for _, i in ipairs(imgs) do
-      local img ---@type snacks.image.Placement?
-      for v, o in pairs(visible) do
-        if o.img.src == i.src then
-          img = o
-          visible[v] = nil
-          break
-        end
-      end
+      local img = self:find(i)
       if not img then
         stats.new = stats.new + 1
         img = Snacks.image.placement.new(
@@ -131,21 +188,28 @@ function M:update()
             end,
           })
         )
+        self:track(img, i.id)
         for _, eid in ipairs(img.eids) do
           self.idx[eid] = img
         end
         self.imgs[img.id] = img
       else
         stats.update = stats.update + 1
+        self:track(img, i.id)
         img.opts.pos = i.pos
         img.opts.range = i.range
         img:update()
       end
+      stale[img.id] = nil
     end
-    for _, img in pairs(visible) do
-      stats.del = stats.del + 1
-      img:close()
-      self.imgs[img.id] = nil
+    for _, img in pairs(stale) do
+      -- Keep placements alive while their rendered extmarks are still on-screen.
+      if not visible[img.id] then
+        stats.del = stats.del + 1
+        self:forget(img)
+        img:close()
+        self.imgs[img.id] = nil
+      end
     end
     for k, v in pairs(stats) do
       stats[k] = v > 0 and v or nil
