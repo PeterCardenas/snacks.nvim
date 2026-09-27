@@ -84,6 +84,24 @@ function M.new(buf, src, opts)
       end,
     })
   end
+  local function update_herdr()
+    vim.schedule(function()
+      if self.closed or not self.img._herdr then
+        return
+      end
+      self._state = nil
+      self:update()
+    end)
+  end
+  vim.api.nvim_create_autocmd({ "BufWinEnter", "BufWinLeave" }, {
+    group = self.augroup,
+    buffer = self.buf,
+    callback = update_herdr,
+  })
+  vim.api.nvim_create_autocmd({ "TabEnter", "TabLeave", "VimResized", "WinResized", "WinNew", "WinClosed" }, {
+    group = self.augroup,
+    callback = update_herdr,
+  })
   placements[self.buf] = placements[self.buf] or {}
   placements[self.buf][self.id] = self
 
@@ -586,7 +604,8 @@ function M:update()
 
   local state = self:state()
   if #state.wins == 0 then
-    self:hide()
+    self.hidden = true
+    Snacks.image.herdr.clear(self)
     return
   end
   -- We mark placements as hidden when no window shows the buffer.
@@ -596,6 +615,9 @@ function M:update()
     state.hidden = false
   end
   if vim.deep_equal(state, self._state) then
+    if self.img._herdr then
+      Snacks.image.herdr.render(self, state)
+    end
     return
   end
   self._state = state
