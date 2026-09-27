@@ -73,6 +73,7 @@ In case of issues, make sure to run `:checkhealth snacks`.
 --- When `nil`, the path is resolved relative to the file.
 ---@field resolve? fun(file: string, src: string): string?
 ---@field convert? snacks.image.convert.Config
+---@field herdr? boolean use the legacy Herdr pane graphics API when available
 {
   formats = {
     "png",
@@ -93,6 +94,7 @@ In case of issues, make sure to run `:checkhealth snacks`.
     "icns",
   },
   force = false, -- try displaying the image, even if the terminal does not support it
+  herdr = true,
   doc = {
     -- enable image viewer for documents
     -- a treesitter parser must be available for the enabled languages.
@@ -263,6 +265,7 @@ docs for more information on how to customize these styles
 ---@field doc snacks.image.doc
 ---@field convert snacks.image.convert
 ---@field inline snacks.image.inline
+---@field herdr snacks.image.herdr
 Snacks.image = {}
 ```
 

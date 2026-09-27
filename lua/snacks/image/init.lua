@@ -7,10 +7,13 @@
 ---@field doc snacks.image.doc
 ---@field convert snacks.image.convert
 ---@field inline snacks.image.inline
+---@field herdr snacks.image.herdr
 local M = setmetatable({}, {
   ---@param M snacks.image
   __index = function(M, k)
-    if vim.tbl_contains({ "terminal", "image", "placement", "util", "doc", "buf", "convert", "inline" }, k) then
+    if
+      vim.tbl_contains({ "terminal", "image", "placement", "util", "doc", "buf", "convert", "inline", "herdr" }, k)
+    then
       M[k] = require("snacks.image." .. k)
     end
     return rawget(M, k)
@@ -55,6 +58,7 @@ M.meta = {
 --- Return `true` to skip fetching, converting and displaying the image.
 ---@field ignore? fun(src: string): boolean?
 ---@field convert? snacks.image.convert.Config
+---@field herdr? boolean use the legacy Herdr pane graphics API when available
 local defaults = {
   formats = {
     "png",
@@ -75,6 +79,7 @@ local defaults = {
     "icns",
   },
   force = false, -- try displaying the image, even if the terminal does not support it
+  herdr = true,
   doc = {
     -- enable image viewer for documents
     -- a treesitter parser must be available for the enabled languages.

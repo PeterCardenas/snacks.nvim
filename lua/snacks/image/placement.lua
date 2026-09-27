@@ -198,6 +198,7 @@ end
 
 function M:del()
   self:_clear_fallback()
+  Snacks.image.herdr.clear(self)
   self.img:del(self.id)
   if vim.api.nvim_buf_is_valid(self.buf) then
     for _, eid in ipairs(self.eids) do
@@ -281,7 +282,9 @@ function M:render_grid(loc)
   end
 
   local img_ext = self.img.info and self.img.info.format
-  local icon = Snacks.image.config.icons[img_ext] or Snacks.image.config.icons[self.opts.type] or Snacks.image.config.icons.image
+  local icon = Snacks.image.config.icons[img_ext]
+    or Snacks.image.config.icons[self.opts.type]
+    or Snacks.image.config.icons.image
   if height == 1 and #lines == 1 and not force_virt_lines then
     -- render inline
     self:_render({
@@ -606,7 +609,9 @@ function M:update()
     end
   end
 
-  if terminal.env().placeholders then
+  if Snacks.image.herdr.render(self, state) then
+    self:render_grid(state.loc)
+  elseif terminal.env().placeholders then
     terminal.request({
       a = "p",
       U = 1,

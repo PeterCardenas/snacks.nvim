@@ -7,6 +7,7 @@
 ---@field info? snacks.image.Info
 ---@field _convert? snacks.image.Convert
 ---@field fsize? number
+---@field _herdr? boolean
 local M = {}
 M.__index = M
 
@@ -143,6 +144,10 @@ end
 function M:send()
   assert(not self.sent, "Image already sent")
   self.sent = true
+  if Snacks.image.herdr.enabled() then
+    self._herdr = true
+    return self:on_send()
+  end
   -- local image
   if not terminal.env().remote then
     terminal.request({
@@ -201,12 +206,14 @@ end
 function M:del(pid)
   for _, p in ipairs(pid and { pid } or vim.tbl_keys(self.placements)) do
     if self.placements[p] then
-      terminal.request({ a = "d", d = "i", i = self.id, p = p })
+      if not self._herdr then
+        terminal.request({ a = "d", d = "i", i = self.id, p = p })
+      end
       self.placements[p] = nil
     end
   end
 
-  if not next(self.placements) then
+  if not self._herdr and not next(self.placements) then
     terminal.request({ a = "d", d = "i", i = self.id })
   end
 end
