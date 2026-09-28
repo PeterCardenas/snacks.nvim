@@ -84,24 +84,6 @@ function M.new(buf, src, opts)
       end,
     })
   end
-  local function update_herdr()
-    vim.schedule(function()
-      if self.closed or not self.img._herdr then
-        return
-      end
-      self._state = nil
-      self:update()
-    end)
-  end
-  vim.api.nvim_create_autocmd({ "BufWinEnter", "BufWinLeave" }, {
-    group = self.augroup,
-    buffer = self.buf,
-    callback = update_herdr,
-  })
-  vim.api.nvim_create_autocmd({ "TabEnter", "TabLeave", "VimResized", "WinResized", "WinNew", "WinClosed" }, {
-    group = self.augroup,
-    callback = update_herdr,
-  })
   placements[self.buf] = placements[self.buf] or {}
   placements[self.buf][self.id] = self
 
@@ -216,7 +198,6 @@ end
 
 function M:del()
   self:_clear_fallback()
-  Snacks.image.herdr.clear(self)
   self.img:del(self.id)
   if vim.api.nvim_buf_is_valid(self.buf) then
     for _, eid in ipairs(self.eids) do
@@ -604,8 +585,7 @@ function M:update()
 
   local state = self:state()
   if #state.wins == 0 then
-    self.hidden = true
-    Snacks.image.herdr.clear(self)
+    self:hide()
     return
   end
   -- We mark placements as hidden when no window shows the buffer.
@@ -615,9 +595,6 @@ function M:update()
     state.hidden = false
   end
   if vim.deep_equal(state, self._state) then
-    if self.img._herdr then
-      Snacks.image.herdr.render(self, state)
-    end
     return
   end
   self._state = state
@@ -631,9 +608,7 @@ function M:update()
     end
   end
 
-  if Snacks.image.herdr.render(self, state) then
-    self:render_grid(state.loc)
-  elseif terminal.env().placeholders then
+  if terminal.env().placeholders then
     terminal.request({
       a = "p",
       U = 1,
